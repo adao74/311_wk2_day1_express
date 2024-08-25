@@ -31,9 +31,16 @@ app.get('/users', (req, res) => {  // JS Basics: Even if you don't use req, res 
 })
 
 // GET a User
-app.get('/users/:id', (req, res) => {
-  const userId = req.params.id
-  res.json(users[userId - 1])
+app.get('/users/:userid', (req, res) => {
+  const userId = req.params.userid
+
+  // filter() doesn't mutate users (We are passing the return value)
+  res.json(users.filter( element => element._id === parseInt(userId)) )
+  
+  console.log(users)
+  
+  // Alternative:  
+  // res.json(users[userId - 1])
 })
 
 // POST a pre-defined User
@@ -78,18 +85,36 @@ app.post('/users', (req, res) => {
 
 })
 
-app.put('/users/1', (req, res) => {
+app.put('/users/:userid', (req, res) => {
+  const userId = req.params.userid
 
-  users[0].name = "Billy"
+  // filter() returns a shallow copy
+  // A shallow copy of an object is a copy whose properties share the same references (point to the same underlying values) as those of the source object that you used to make a copy.
+  // As a result, when you change either the source or the copy, you may also cause the other object to change too.
+  // This is why when I change the copy (variable `updated`), the users array also changed (you can see the user array changed when you make a subsequent GET request) 
+  const updated = users.filter( element => element._id === parseInt(userId))[0]  // save the object
+  
+  updated.name = "Billy Bob"
 
-  res.json(users[0])
+  res.json(updated)
+
+  // Alternative:
+  // users[userId - 1].name = "Billy Bob"
+  // res.json(users[userId - 1])
 })
 
-app.delete('/users/1', (req, res) => {
+app.delete('/users/:userId', (req, res) => {
+  const userId = req.params.userId
 
-  users.shift()
+  const deleted = users.filter( element => element._id === parseInt(userId))[0]
+  deleted.isActive = false
+  res.send(`Successfully deleted!!! users is now ${JSON.stringify(users)}`)
+  
+  // If you were trying to delete the entire user, the following does NOT work because 1) filter doesn't mutate users 2) you didn't do anything to the shallow copy
+  // i.e. Even though the returned array won't have the user you tried to delete, you can see the user you tried to delete will still be returned when you make a GET request
+  // const restOfUsers = users.filter( element => element._id !== parseInt(userId))
+  // res.json(restOfUsers)
 
-  res.send(`user deleted. users is now ${JSON.stringify(users)}`)
 })
 
 /* END - create routes here */
